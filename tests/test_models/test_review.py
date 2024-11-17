@@ -1,52 +1,59 @@
 #!/usr/bin/python3
-"""Unittest module for the Review Class."""
-
+""" Unittest for Review class """
 import unittest
-from datetime import datetime
-import time
-from models.review import Review
-import re
 import json
-from models.engine.file_storage import FileStorage
+import pep8
 import os
-from models import storage
 from models.base_model import BaseModel
+from models.amenity import Amenity
+from models.city import City
+from models.place import Place
+from models.state import State
+from models.review import Review
+from models.user import User
+from models.engine.file_storage import FileStorage
 
 
 class TestReview(unittest.TestCase):
 
-    """Test Cases for the Review class."""
-
     def setUp(self):
-        """Sets up test methods."""
-        pass
+        """SetUp method"""
+        self.review1 = Review()
+        self.review1.place_id = "24g5gk2gk234"
+        self.review1.user_id = "3r45t9s323d9"
+        self.review1.text = "Loren ipsum"
 
-    def tearDown(self):
-        """Tears down test methods."""
-        self.resetStorage()
-        pass
+    def test_base_pep8(self):
+        """Test for pep8"""
+        pep8style = pep8.StyleGuide(quiet=True)
+        result = pep8style.check_files(['./models/review.py'])
+        self.assertEqual(result.total_errors, 0)
 
-    def resetStorage(self):
-        """Resets FileStorage data."""
-        FileStorage._FileStorage__objects = {}
-        if os.path.isfile(FileStorage._FileStorage__file_path):
-            os.remove(FileStorage._FileStorage__file_path)
+    def test_docstring(self):
+        """test docstring in the file"""
+        self.assertIsNotNone(Review.__doc__)
 
-    def test_8_instantiation(self):
-        """Tests instantiation of Review class."""
+    def test_is_instance(self):
+        """Test for instantiation"""
+        self.assertIsInstance(self.review1, Review)
 
-        b = Review()
-        self.assertEqual(str(type(b)), "<class 'models.review.Review'>")
-        self.assertIsInstance(b, Review)
-        self.assertTrue(issubclass(type(b), BaseModel))
+    def test_attributes(self):
+        """Test to check attributes"""
+        self.review1.save()
+        review1_json = self.review1.to_dict()
+        my_new_review = Review(**review1_json)
+        self.assertEqual(my_new_review.id, self.review1.id)
+        self.assertEqual(my_new_review.created_at, self.review1.created_at)
+        self.assertEqual(my_new_review.updated_at, self.review1.updated_at)
+        self.assertIsNot(self.review1, my_new_review)
 
-    def test_8_attributes(self):
-        """Tests the attributes of Review class."""
-        attributes = storage.attributes()["Review"]
-        o = Review()
-        for k, v in attributes.items():
-            self.assertTrue(hasattr(o, k))
-            self.assertEqual(type(getattr(o, k, None)), v)
+    def test_subclass(self):
+        """Test to check the inheritance"""
+        self.assertTrue(issubclass(self.review1.__class__, BaseModel), True)
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_save(self):
+        """Test to check save method"""
+        variable_update = self.review1.updated_at
+        self.review1.save()
+        self.assertNotEqual(variable_update, self.review1.updated_at)
+        
