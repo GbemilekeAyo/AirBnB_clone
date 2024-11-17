@@ -1,60 +1,70 @@
 #!/usr/bin/python3
-"""Module for Base class
-Contains the Base class for the AirBnB clone console.
 """
-
+BaseModel class that defines all common attributes/methods for other classes
+"""
 import uuid
 from datetime import datetime
-from models import storage
+import models
+import json
+isoform_time = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 class BaseModel:
-
-    """Class for base model of object hierarchy."""
-
+    """
+        Summary: Definning the base class
+        from which the other classes will inherit
+        Attributes:
+            id -> Public instance attributes
+            created_at -> Public instance attributes
+            updated_at -> Public instance attributes
+    """
     def __init__(self, *args, **kwargs):
-        """Initialization of a Base instance.
-
-        Args:
-            - *args: list of arguments
-            - **kwargs: dict of key-values arguments
         """
-
-        if kwargs is not None and kwargs != {}:
-            for key in kwargs:
-                if key == "created_at":
-                    self.__dict__["created_at"] = datetime.strptime(
-                        kwargs["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
-                elif key == "updated_at":
-                    self.__dict__["updated_at"] = datetime.strptime(
-                        kwargs["updated_at"], "%Y-%m-%dT%H:%M:%S.%f")
-                else:
-                    self.__dict__[key] = kwargs[key]
-        else:
+        Initialization of the object/instance attributes
+            id: contains the object's identification
+            created_at: the datetime in which the object was created
+            updated_at: the datetime in which the object was modified
+        """
+        if kwargs is None or len(kwargs) == 0:
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
             self.updated_at = datetime.now()
-            storage.new(self)
+            models.storage.new(self)
+        else:
+            for key, value in kwargs.items():
+                if key == "id":
+                    self.id = value
+                elif key == "created_at" or key == "updated_at":
+                    self.__dict__[key] = datetime.strptime(value, isoform_time)
+                elif key is "__class__":
+                    pass
+                elif key is not "__class__":
+                    self.__dict__[key] = value
 
     def __str__(self):
-        """Returns a human-readable string representation
-        of an instance."""
-
-        return "[{}] ({}) {}".\
-            format(type(self).__name__, self.id, self.__dict__)
+        """ Writing the __str__ method """
+        return "[{}] ({}) {}".format(self.__class__.__name__,
+                                     self.id, self.__dict__)
 
     def save(self):
-        """Updates the updated_at attribute
-        with the current datetime."""
-
+        """ Public instance methods:
+            updates the public instance attribute updated_at
+            with the current datetime
+        """
         self.updated_at = datetime.now()
-        storage.save()
+        models.storage.save()
 
     def to_dict(self):
-        """Returns a dictionary representation of an instance."""
-
-        my_dict = self.__dict__.copy()
-        my_dict["__class__"] = type(self).__name__
-        my_dict["created_at"] = my_dict["created_at"].isoformat()
-        my_dict["updated_at"] = my_dict["updated_at"].isoformat()
-        return my_dict
+        """ Public instance methods
+            returns a dictionary containing all keys/values
+            of __dict__ of the instance with self.__dict__
+            we are making a copy.
+            This method will be the first piece of the
+            serialization/deserialization process: create a dictionary
+            representation with “simple object type” of our BaseModel
+        """
+        dic_BaseClass = self.__dict__.copy()
+        dic_BaseClass["__class__"] = self.__class__.__name__
+        dic_BaseClass["created_at"] = self.created_at.isoformat()
+        dic_BaseClass["updated_at"] = self.updated_at.isoformat()
+        return dic_BaseClass
